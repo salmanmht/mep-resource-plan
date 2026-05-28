@@ -493,7 +493,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
     <div class="pin-err" id="pin-err-set" style="margin-top:8px;color:#34c759;"></div>
   </div>
 
-  <div style="position:absolute;bottom:12px;width:100%;text-align:center;font-size:9px;color:#b0b0b5;letter-spacing:.02em;z-index:1;">v7.9.0 · 28 May 2026</div>
+  <div style="position:absolute;bottom:12px;width:100%;text-align:center;font-size:9px;color:#b0b0b5;letter-spacing:.02em;z-index:1;">v7.9.1 · 28 May 2026</div>
 </div>
 
 <div class="sb-overlay" id="sb-overlay" onclick="closeMobSB()"></div>
@@ -549,7 +549,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
   <div id="sb-signout" style="display:none;padding:8px 10px 12px;">
     <button onclick="doLogout()" style="width:100%;font-size:11px;font-weight:600;color:var(--red);background:var(--red2);border:1px solid #ffcccb;border-radius:8px;cursor:pointer;padding:7px;font-family:inherit;letter-spacing:-.01em;transition:.12s;" onmouseover="this.style.background='#ffd5d3'" onmouseout="this.style.background='var(--red2)'">⎋ Sign Out</button>
   </div>
-  <div style="padding:4px 14px 10px;font-size:9px;color:#b0b0b5;letter-spacing:.02em;">v7.9.0 · 28 May 2026</div>
+  <div style="padding:4px 14px 10px;font-size:9px;color:#b0b0b5;letter-spacing:.02em;">v7.9.1 · 28 May 2026</div>
 </div>
 
 <div class="main">
@@ -7509,148 +7509,8 @@ async function applyBIMImport(){
 // STEP 6 — BIM SEED DATA (parsed from XLSM files)
 // ═══════════════════════════════════════
 function loadBIMSeedData(){
-  // ── 1. BIM Engineers ──────────────────────────────────
-  const BIM_MEMBERS = [
-    {
-      id:'bim_sayan_bal', name:"Sayan Bal", desig:"BIM Manager",
-      pos:"BIM Manager", disc:'HVAC', subDisc:'HVAC',
-      off:'DXB', cap:45, rate:121, grade:'BIM Manager', team:'BIM', empno:'BIMEP001'
-    },
-    {
-      id:'bim_suman_singha', name:"Suman Singha", desig:"BIM Coordinator-MEP",
-      pos:"BIM Coordinator-MEP", disc:'HVAC', subDisc:'HVAC',
-      off:'DXB', cap:45, rate:66, grade:'BIM Coordinator', team:'BIM', empno:'BIMEP002'
-    },
-    {
-      id:'bim_saravanan_gangadharan', name:"Saravanan Gangadharan", desig:"Senior BIM Modeler - Mechanical",
-      pos:"Senior BIM Modeler - Mechanical", disc:'HVAC', subDisc:'HVAC',
-      off:'DXB', cap:45, rate:57, grade:'Senior BIM Modeler', team:'BIM', empno:'BIMEP003'
-    },
-    {
-      id:'bim_sakthivel_r', name:"Sakthivel R", desig:"BIM Modeler - Mechanical",
-      pos:"BIM Modeler - Mechanical", disc:'HVAC', subDisc:'HVAC',
-      off:'DXB', cap:45, rate:53, grade:'BIM Modeler', team:'BIM', empno:'BIMEP004'
-    },
-    {
-      id:'bim_shubham_gupta', name:"Shubham Gupta", desig:"BIM Modeler - Mechanical",
-      pos:"BIM Modeler - Mechanical", disc:'HVAC', subDisc:'HVAC',
-      off:'DXB', cap:45, rate:48, grade:'BIM Modeler', team:'BIM', empno:'BIMEP005'
-    },
-    {
-      id:'bim_ramasish_banerjee', name:"Ramasish Banerjee", desig:"BIM Specialist - Mechanical",
-      pos:"BIM Specialist - Mechanical", disc:'HVAC', subDisc:'HVAC',
-      off:'DXB', cap:45, rate:68, grade:'BIM Specialist', team:'BIM', empno:'BIMEP006'
-    },
-    {
-      id:'bim_sameer_dabir', name:"Sameer Dabir", desig:"BIM Coordinator-MEP",
-      pos:"BIM Coordinator-MEP", disc:'PH&E', subDisc:'PH&E',
-      off:'DXB', cap:45, rate:48, grade:'BIM Coordinator', team:'BIM', empno:'BIMEP007'
-    },
-    {
-      id:'bim_sourav_roy', name:"Sourav Roy", desig:"BIM Modeler - PH",
-      pos:"BIM Modeler - PH", disc:'PH&E', subDisc:'PH&E',
-      off:'DXB', cap:45, rate:51, grade:'BIM Modeler', team:'BIM', empno:'BIMEP008'
-    },
-    {
-      id:'bim_kalyan_roy', name:"Kalyan Roy", desig:"BIM Modeler - PH",
-      pos:"BIM Modeler - PH", disc:'PH&E', subDisc:'PH&E',
-      off:'DXB', cap:45, rate:45, grade:'BIM Modeler', team:'BIM', empno:'BIMEP009'
-    },
-    {
-      id:'bim_sanjay_nallaiah', name:"Sanjay Nallaiah", desig:"BIM Modeler - PH",
-      pos:"BIM Modeler - PH", disc:'PH&E', subDisc:'PH&E',
-      off:'DXB', cap:45, rate:51, grade:'BIM Modeler', team:'BIM', empno:'BIMEP010'
-    },
-    {
-      id:'bim_debashis_mandal', name:"Debashis Mandal", desig:"BIM Modeler - PH",
-      pos:"BIM Modeler - PH", disc:'PH&E', subDisc:'PH&E',
-      off:'DXB', cap:45, rate:45, grade:'BIM Modeler', team:'BIM', empno:'BIMEP011'
-    },
-    {
-      id:'bim_jse_mec', name:"JSE-MEC", desig:"BIM Modeler - Mechanical",
-      pos:"BIM Modeler - Mechanical", disc:'HVAC', subDisc:'HVAC',
-      off:'IND', cap:45, rate:25, grade:'BIM Modeler', team:'BIM', empno:''
-    },
-    {
-      id:'bim_jse_ph', name:"JSE-PH", desig:"BIM Modeler - PH",
-      pos:"BIM Modeler - PH", disc:'PH&E', subDisc:'PH&E',
-      off:'IND', cap:45, rate:25, grade:'BIM Modeler', team:'BIM', empno:''
-    },
-    {
-      id:'bim_mohammed_tabrez_shaik', name:"Mohammed Tabrez Shaik", desig:"Assistant BIM Manager",
-      pos:"Assistant BIM Manager", disc:'ELE', subDisc:'ELE',
-      off:'DXB', cap:45, rate:93, grade:'Assistant BIM Manager', team:'BIM', empno:'BIMEP012'
-    },
-    {
-      id:'bim_raafat_soliman', name:"Raafat Soliman", desig:"BIM Coordinator-MEP",
-      pos:"BIM Coordinator-MEP", disc:'ELE', subDisc:'ELE',
-      off:'DXB', cap:45, rate:81, grade:'BIM Coordinator', team:'BIM', empno:'BIMEP013'
-    },
-    {
-      id:'bim_muhammed_aslam_erimban', name:"Muhammed Aslam Erimban", desig:"Senior BIM Modeler - Electrical",
-      pos:"Senior BIM Modeler - Electrical", disc:'ELE', subDisc:'ELE',
-      off:'DXB', cap:45, rate:54, grade:'Senior BIM Modeler', team:'BIM', empno:'BIMEP014'
-    },
-    {
-      id:'bim_mahesh_marappu', name:"Mahesh Marappu", desig:"BIM Modeler - Electrical",
-      pos:"BIM Modeler - Electrical", disc:'ELE', subDisc:'ELE',
-      off:'DXB', cap:45, rate:51, grade:'BIM Modeler', team:'BIM', empno:'BIMEP015'
-    },
-    {
-      id:'bim_sunilkumar_marimuthu', name:"Sunilkumar Marimuthu", desig:"BIM Modeler - Electrical",
-      pos:"BIM Modeler - Electrical", disc:'ELE', subDisc:'ELE',
-      off:'DXB', cap:45, rate:45, grade:'BIM Modeler', team:'BIM', empno:'BIMEP016'
-    },
-    {
-      id:'bim_muhamed_hemida', name:"Muhamed Hemida", desig:"Senior BIM Modeler - Electrical",
-      pos:"Senior BIM Modeler - Electrical", disc:'ELE', subDisc:'ELE',
-      off:'DXB', cap:45, rate:66, grade:'Senior BIM Modeler', team:'BIM', empno:'BIMEP017'
-    },
-    {
-      id:'bim_praneesh_ks', name:"Praneesh KS", desig:"BIM Modeler - ELV",
-      pos:"BIM Modeler - ELV", disc:'ELV', subDisc:'ELV',
-      off:'DXB', cap:45, rate:45, grade:'BIM Modeler', team:'BIM', empno:'BIMEP018'
-    },
-    {
-      id:'bim_sandeep_kumar', name:"Sandeep Kumar", desig:"BIM Modeler - ELV",
-      pos:"BIM Modeler - ELV", disc:'ELV', subDisc:'ELV',
-      off:'DXB', cap:45, rate:51, grade:'BIM Modeler', team:'BIM', empno:'BIMEP019'
-    },
-    {
-      id:'bim_prince_kumar', name:"Prince Kumar", desig:"BIM Modeler - ELV",
-      pos:"BIM Modeler - ELV", disc:'ELV', subDisc:'ELV',
-      off:'DXB', cap:45, rate:48, grade:'BIM Modeler', team:'BIM', empno:'BIMEP020'
-    },
-    {
-      id:'bim_sudheep_sukumaran', name:"Sudheep Sukumaran", desig:"BIM Modeler - ELV",
-      pos:"BIM Modeler - ELV", disc:'ELV', subDisc:'ELV',
-      off:'DXB', cap:45, rate:55, grade:'BIM Modeler', team:'BIM', empno:'BIMEP021'
-    },
-    {
-      id:'bim_jse_ele', name:"JSE-ELE", desig:"BIM Modeler - Electrical",
-      pos:"BIM Modeler - Electrical", disc:'ELE', subDisc:'ELE',
-      off:'IND', cap:45, rate:25, grade:'BIM Modeler', team:'BIM', empno:''
-    },
-    {
-      id:'bim_jse_elv', name:"JSE-ELV", desig:"BIM Modeler - ELV",
-      pos:"BIM Modeler - ELV", disc:'ELV', subDisc:'ELV',
-      off:'IND', cap:45, rate:25, grade:'BIM Modeler', team:'BIM', empno:''
-    }
-  ];
-
-  // Add members that don't already exist; patch empno if missing
-  BIM_MEMBERS.forEach(m => {
-    m.team = 'BIM';
-    const existing = S.engineers.find(e => e.id === m.id);
-    if (!existing) {
-      S.engineers.push(m);
-    } else {
-      // Patch empno onto existing record if it was saved without one
-      if (!existing.empno && m.empno) existing.empno = m.empno;
-    }
-  });
-
-  console.log('BIM members registered (hours in project_hours table)');
+  // BIM members are loaded from Supabase engineers table — nothing to do here
+  console.log('BIM: loaded from Supabase');
 }
 
 
