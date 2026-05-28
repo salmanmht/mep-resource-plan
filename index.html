@@ -493,7 +493,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
     <div class="pin-err" id="pin-err-set" style="margin-top:8px;color:#34c759;"></div>
   </div>
 
-  <div style="position:absolute;bottom:12px;width:100%;text-align:center;font-size:9px;color:#b0b0b5;letter-spacing:.02em;z-index:1;">v7.9.7 · 28 May 2026</div>
+  <div style="position:absolute;bottom:12px;width:100%;text-align:center;font-size:9px;color:#b0b0b5;letter-spacing:.02em;z-index:1;">v7.9.9 · 28 May 2026</div>
 </div>
 
 <div class="sb-overlay" id="sb-overlay" onclick="closeMobSB()"></div>
@@ -549,7 +549,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
   <div id="sb-signout" style="display:none;padding:8px 10px 12px;">
     <button onclick="doLogout()" style="width:100%;font-size:11px;font-weight:600;color:var(--red);background:var(--red2);border:1px solid #ffcccb;border-radius:8px;cursor:pointer;padding:7px;font-family:inherit;letter-spacing:-.01em;transition:.12s;" onmouseover="this.style.background='#ffd5d3'" onmouseout="this.style.background='var(--red2)'">⎋ Sign Out</button>
   </div>
-  <div style="padding:4px 14px 10px;font-size:9px;color:#b0b0b5;letter-spacing:.02em;">v7.9.7 · 28 May 2026</div>
+  <div style="padding:4px 14px 10px;font-size:9px;color:#b0b0b5;letter-spacing:.02em;">v7.9.9 · 28 May 2026</div>
 </div>
 
 <div class="main">
@@ -936,24 +936,6 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
 </div>
 </div>
 
-<!-- BIM Import overlay -->
-<input type="file" id="bim-file-input" accept=".xlsm,.xlsx" style="display:none;" onchange="handleBIMFile(this)">
-<div class="ov" id="bim-import-ov">
-<div class="modal" style="max-width:820px;">
-  <div class="modal-hd" style="background:#f0fdfa;">
-    <span class="modal-ht" style="color:#0f766e;">🧱 BIM Data Import — Preview</span>
-    <button class="cls" onclick="closeBIMImportModal()">&times;</button>
-  </div>
-  <div class="modal-bd" id="bim-import-body" style="max-height:65vh;overflow-y:auto;">
-    <div style="text-align:center;padding:30px;color:var(--tx3);">Reading file…</div>
-  </div>
-  <div class="modal-ft">
-    <span id="bim-import-summary" style="font-size:11px;color:var(--tx3);margin-right:auto;"></span>
-    <button class="btn btn-g" onclick="closeBIMImportModal()">Cancel</button>
-    <button class="btn btn-p" id="bim-import-apply-btn" onclick="applyBIMImport()" style="display:none;background:#0d9488;">Apply Import</button>
-  </div>
-</div>
-</div>
 
 <div class="toast" id="toast"></div>
 
@@ -1450,7 +1432,6 @@ function requireAdmin(){
   if(adminUnlocked){nav('rates');return;}
   toast('Access denied — admin account required.');
 }
-function checkAdminPin(){/* legacy no-op */}
 
 // ═══════════════════════════════════════
 // SUPABASE
@@ -1470,39 +1451,6 @@ async function sbUpsert(table,row){
 }
 async function sbDel(table,id){return sbFetch(table+'?id=eq.'+id,'DELETE');}
 function setSyncStatus(ok,txt){document.getElementById('sync-dot').className='sync-dot'+(ok?'':' off');document.getElementById('sync-txt').textContent=txt;}
-
-// ═══════════════════════════════════════
-// ONE-TIME MIGRATION: move weeklyHrs from projects blob → project_hours table
-// Run once from browser console: migrateHoursToTable()
-// ═══════════════════════════════════════
-async function migrateHoursToTable(){
-  if(!confirm('Migrate ALL project hours to the new project_hours table?\nThis is safe to run multiple times.')) return;
-  let total=0,errors=0;
-  toast('Migration starting…');
-  // Reload raw project data with weeklyHrs from old blob
-  try{
-    const projs=await sbGet('projects');
-    for(const row of projs){
-      const p=row.data;
-      const wh=p.weeklyHrs||{};
-      for(const [engId,arr] of Object.entries(wh)){
-        if(!arr) continue;
-        for(let wi=0;wi<arr.length;wi++){
-          const h=arr[wi];
-          if(!h||h<=0) continue;
-          try{
-            await sbFetch('project_hours','POST',
-              {project_id:p.id,engineer_id:engId,week_index:wi,hours:h},
-              'resolution=merge-duplicates,return=representation');
-            total++;
-          }catch(e){ errors++; console.error('row error',p.id,engId,wi,e); }
-        }
-      }
-    }
-    toast('Migration done: '+total+' rows, '+errors+' errors');
-    console.log('Migration complete:',total,'rows,',errors,'errors');
-  }catch(e){ toast('Migration failed: '+e.message); }
-}
 
 async function initApp(){
   setSyncStatus(false,'Connecting…');
@@ -1557,9 +1505,7 @@ async function initApp(){
   const savedPage=sessionStorage.getItem('lastPage');
   nav(savedPage&&PAGES.includes(savedPage)?savedPage:'mep');
 }
-
 function loadLocal(){try{const d=localStorage.getItem('mepR26');if(d){const p=JSON.parse(d);S.engineers=p.engineers||S.engineers;S.projects=p.projects||S.projects;S.rates=p.rates||S.rates;S.leaveHrs=p.leaveHrs||{};S.mgmtHrs=p.mgmtHrs||{};}}catch(e){}
-  // Backfill team field on any engineer missing it
   S.engineers.forEach(e=>{ if(!e.team) e.team='MEP'; });
 }
 function saveLocal(){try{localStorage.setItem('mepR26',JSON.stringify(S));}catch(e){}}
@@ -1583,6 +1529,7 @@ async function pushRates(){try{
 // ═══════════════════════════════════════
 // SEED DATA
 // ═══════════════════════════════════════
+
 function stageWeeks(start,end){
   const wks=[];let d=new Date(start);const day=d.getDay();
   if(day!==1)d.setDate(d.getDate()+((8-day)%7||7));
@@ -1880,58 +1827,21 @@ function updSB(){
 // MOBILE
 // ═══════════════════════════════════════
 function isMobile(){return window.innerWidth<=700;}
-// iOS-safe scroll lock
-let _mobSBScrollY=0;
-let _sbTouchStartY=0;
 function openMobSB(){
   document.getElementById('sidebar').classList.add('mob-open');
   document.getElementById('sb-overlay').style.display='block';
   document.getElementById('sb-close-btn').style.display='block';
-  _mobSBScrollY=window.scrollY||window.pageYOffset||0;
-  document.body.style.top='-'+_mobSBScrollY+'px';
-  document.body.style.position='fixed';
-  document.body.style.left='0';
-  document.body.style.right='0';
   document.body.style.overflow='hidden';
-  const ov=document.getElementById('sb-overlay');
-  if(ov) ov.addEventListener('touchmove',_preventScroll,{passive:false});
-  // Prevent iOS rubber-band bounce at scroll boundaries
-  const sb=document.getElementById('sidebar');
-  if(sb){
-    sb.addEventListener('touchstart',_sbTouchStart,{passive:true});
-    sb.addEventListener('touchmove',_sbTouchMove,{passive:false});
-  }
+  document.body.style.position='fixed';
+  document.body.style.width='100%';
 }
 function closeMobSB(){
   document.getElementById('sidebar').classList.remove('mob-open');
   document.getElementById('sb-overlay').style.display='none';
   document.getElementById('sb-close-btn').style.display='none';
-  document.body.style.position='';
-  document.body.style.top='';
-  document.body.style.left='';
-  document.body.style.right='';
   document.body.style.overflow='';
-  window.scrollTo(0,_mobSBScrollY);
-  const ov=document.getElementById('sb-overlay');
-  if(ov) ov.removeEventListener('touchmove',_preventScroll);
-  const sb=document.getElementById('sidebar');
-  if(sb){
-    sb.removeEventListener('touchstart',_sbTouchStart);
-    sb.removeEventListener('touchmove',_sbTouchMove);
-  }
-}
-function _preventScroll(e){ e.preventDefault(); }
-function _sbTouchStart(e){ _sbTouchStartY=e.touches[0].clientY; }
-function _sbTouchMove(e){
-  const sb=document.getElementById('sidebar');
-  if(!sb) return;
-  const delta=_sbTouchStartY-e.touches[0].clientY;
-  const atTop=sb.scrollTop===0;
-  const atBottom=sb.scrollTop+sb.clientHeight>=sb.scrollHeight-1;
-  // Block scroll if at boundary and trying to scroll further in that direction
-  if((atTop&&delta<0)||(atBottom&&delta>0)){
-    e.preventDefault();
-  }
+  document.body.style.position='';
+  document.body.style.width='';
 }
 function showMobMenuBtns(){document.querySelectorAll('.mob-menu-btn').forEach(b=>b.style.display=isMobile()?'flex':'none');}
 window.addEventListener('resize',showMobMenuBtns);
@@ -3127,7 +3037,6 @@ function renderBIM(pcId){
     ${emptyBanner}
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
       <div style="font-size:11px;color:var(--tx3);">📅 Period: <strong style="color:var(--tx1)">${miLabel(minMI)} – ${miLabel(minMI+NMON-1)}</strong> &nbsp;·&nbsp; Change range on Combined MEP dashboard</div>
-      <button class="btn btn-sm" style="background:#0d9488;color:#fff;" onclick="openBIMImport()">📥 Import BIM Data</button>
     </div>
     <div class="mrow">
       <div class="mc te"><div class="mc-l">BIM Members</div><div class="mc-v">${sub.length}</div><div class="mc-s">${dxb.length} DXB · ${ind.length} IND</div></div>
@@ -4110,12 +4019,6 @@ function stageBgCSS(stageIndices, stages){
     pos+=stripeW;
   });
   return `background:repeating-linear-gradient(135deg,${stops});`;
-}
-
-// Legacy shim for any old code still calling the old API
-function getProgrammeWeekSet(p){
-  const m=getStageWeekMap(p);
-  return new Set([...m.keys()]);
 }
 
 // Storage helper for the per-project Rate column visibility (default: hidden)
@@ -7023,413 +6926,6 @@ function bimSlug(name){
   return 'bim_' + (name||'').toString().toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
 }
 function bimNorm(s){return(s||'').toString().toLowerCase().trim().replace(/\s+/g,' ');}
-
-function openBIMImport(){
-  document.getElementById('bim-file-input').click();
-}
-
-function closeBIMImportModal(){
-  document.getElementById('bim-import-ov').classList.remove('open');
-  window.bimImportData=null;
-}
-
-function handleBIMFile(input){
-  const file=input.files[0];
-  if(!file)return;
-  input.value=''; // reset so same file can be re-picked
-  if(typeof XLSX==='undefined'){toast('Excel library not loaded. Refresh page.');return;}
-
-  // Open modal in loading state
-  document.getElementById('bim-import-body').innerHTML=
-    '<div style="text-align:center;padding:30px;color:var(--tx3);">Reading file…</div>';
-  document.getElementById('bim-import-summary').textContent='';
-  document.getElementById('bim-import-apply-btn').style.display='none';
-  document.getElementById('bim-import-ov').classList.add('open');
-
-  const reader=new FileReader();
-  reader.onload=function(e){
-    try{
-      const data=new Uint8Array(e.target.result);
-      const wb=XLSX.read(data,{type:'array',cellDates:true});
-      const parsed=parseBIMWorkbook(wb);
-      window.bimImportData=parsed;
-      renderBIMImportPreview(parsed);
-    }catch(err){
-      console.error('BIM import parse error:',err);
-      document.getElementById('bim-import-body').innerHTML=
-        `<div style="color:var(--red);padding:20px;"><strong>Parse failed</strong><br><span style="font-size:11px;">${(err&&err.message)||err}</span></div>`;
-    }
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-function parseBIMWorkbook(wb){
-  const sheetNames=wb.SheetNames||[];
-  const membersSheetName=sheetNames.find(n=>n.toLowerCase()==='members');
-  const resourceSheetName=sheetNames.find(n=>n.toLowerCase()==='resource');
-  if(!membersSheetName)throw new Error('Members sheet not found. Sheets present: '+sheetNames.join(', '));
-  if(!resourceSheetName)throw new Error('Resource sheet not found. Sheets present: '+sheetNames.join(', '));
-
-  const membersWs=wb.Sheets[membersSheetName];
-  const resourceWs=wb.Sheets[resourceSheetName];
-
-  // ── Parse Members sheet ──
-  const memberRows=XLSX.utils.sheet_to_json(membersWs,{header:1,defval:'',raw:true});
-  const members=[];
-  // Rows 2-26 = indexes 1-25 in 0-indexed array (row 1 = header)
-  for(let r=1;r<=25;r++){
-    const row=memberRows[r]||[];
-    const name=(row[0]||'').toString().trim();
-    if(!name)continue;
-    const desig=(row[1]||'').toString().trim();
-    const fileDisc=(row[2]||'').toString().trim();
-    const rate=Number(row[3])||0;
-    const appDisc=BIM_DISC_MAP[fileDisc]||fileDisc;
-    const isJSE=name.toUpperCase().startsWith('JSE-');
-    const off=isJSE?'IND':'DXB';
-    const id=bimSlug(name);
-    members.push({
-      id, name, desig,
-      disc: appDisc, subDisc: appDisc,
-      off, cap:45, rate,
-      grade:'BIM / Technician',
-      team:'BIM',
-      pos:desig,
-      fileRowIndex:r+3 // their row offset within each project block (4..28)
-    });
-  }
-
-  // ── Parse Resource sheet header (row 2 = index 1) for date columns ──
-  const resourceRows=XLSX.utils.sheet_to_json(resourceWs,{header:1,defval:'',raw:false,cellDates:true});
-  const headerRow=resourceRows[1]||[];
-  // Cols 6..58 (0-indexed: 5..57) hold the 53 weekly date headers
-  const headerDates=[];
-  for(let c=5;c<=57;c++){
-    const v=headerRow[c];
-    let d=null;
-    if(v instanceof Date){d=v;}
-    else if(typeof v==='number'){
-      // Excel serial date
-      const epoch=new Date(Date.UTC(1899,11,30));
-      d=new Date(epoch.getTime()+v*86400000);
-    }else if(typeof v==='string'&&v.trim()){
-      const parsed=new Date(v);
-      if(!isNaN(parsed))d=parsed;
-    }
-    headerDates.push(d);
-  }
-
-  // Anchor for leave/admin = 2026-04-06 (Monday)
-  const G_ANCHOR=new Date('2026-04-06T00:00:00');
-  function gwiForDate(d){
-    if(!d)return -1;
-    const diff=(d-G_ANCHOR)/(7*86400000);
-    const wi=Math.round(diff);
-    return wi>=0?wi:-1;
-  }
-
-  // ── Parse each block ──
-  const blocks=[];
-  BIM_BLOCK_OFFSETS.forEach(off=>{
-    const startRow=off.row-1; // 0-indexed
-    // The project NAME row is `startRow`. Member rows are startRow+3 .. startRow+27 (25 rows).
-    // But handoff says R7 = Annual Leave block — same 29-row structure with leave at the head.
-    // Member rows for any block: startRow+3 .. startRow+27.
-    const nameCell=(resourceRows[startRow]||[])[1]; // col B (index 1)
-    const detectedName=nameCell?nameCell.toString().trim():off.name;
-    const block={type:off.type,row:off.row,handoffName:off.name,detectedName,memberHours:{}};
-    let totalHrs=0;
-    members.forEach(m=>{
-      const memberRow=resourceRows[startRow+3+(m.fileRowIndex-4)]||[];
-      const weekVals=[];
-      let memberTotal=0;
-      for(let c=5;c<=57;c++){
-        const raw=memberRow[c];
-        let v=Number(raw);
-        if(!isFinite(v)||isNaN(v))v=0;
-        weekVals.push(v);
-        memberTotal+=v;
-      }
-      block.memberHours[m.id]={weekVals,total:memberTotal};
-      totalHrs+=memberTotal;
-    });
-    block.totalHrs=totalHrs;
-    blocks.push(block);
-  });
-
-  // ── Match project blocks to existing S.projects ──
-  blocks.forEach(b=>{
-    if(b.type!=='project'){b.action='auto';return;}
-    const target=bimNorm(b.detectedName||b.handoffName);
-    let match=null;
-    S.projects.forEach(p=>{
-      if(match)return;
-      const candidates=[bimNorm(p.name),bimNorm(p.no)];
-      if(candidates.includes(target)){match=p;return;}
-      // Loose contains-match either direction
-      if(candidates.some(c=>c&&(c.includes(target)||target.includes(c))))match=p;
-    });
-    b.match=match;
-    b.action=match?'apply':'skip'; // default decision for unknowns is skip
-  });
-
-  return {members, headerDates, blocks, gwiForDate, anchor:G_ANCHOR};
-}
-
-function renderBIMImportPreview(data){
-  const{members,blocks}=data;
-  const existingIds=new Set(S.engineers.map(e=>e.id));
-  const newMembers=members.filter(m=>!existingIds.has(m.id));
-  const existingMembers=members.filter(m=>existingIds.has(m.id));
-
-  // Member section
-  const memSection=`
-    <div style="margin-bottom:14px;">
-      <div style="font-size:12px;font-weight:700;color:#0f766e;margin-bottom:6px;">👥 BIM Members detected: ${members.length}</div>
-      <div style="font-size:11px;color:var(--tx2);margin-bottom:6px;">
-        ${newMembers.length} new · ${existingMembers.length} already in roster (will be skipped to preserve edits)
-      </div>
-      <div style="max-height:160px;overflow-y:auto;border:1px solid var(--bdr);border-radius:6px;">
-        <table class="tbl" style="font-size:10px;width:100%;">
-          <thead><tr><th>Status</th><th>Name</th><th>Designation</th><th>Sub-Disc</th><th>Off</th><th>Rate</th></tr></thead>
-          <tbody>
-            ${members.map(m=>{
-              const isNew=!existingIds.has(m.id);
-              const statusBdg=isNew?'<span style="background:#d1fae5;color:#065f46;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:700;">NEW</span>':'<span style="background:#e5e7eb;color:#374151;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:700;">SKIP</span>';
-              return `<tr>
-                <td>${statusBdg}</td>
-                <td style="font-weight:600;">${m.name}</td>
-                <td style="font-size:9px;color:var(--tx3);">${m.desig}</td>
-                <td><span class="bdg b-${(DISC_CLS[m.disc]||'')}" style="font-size:9px;">${m.disc}</span></td>
-                <td><span class="bdg ${m.off==='IND'?'b-ind':'b-dxb'}" style="font-size:9px;">${m.off}</span></td>
-                <td style="text-align:right;font-weight:600;">${m.rate}</td>
-              </tr>`;
-            }).join('')}
-          </tbody>
-        </table>
-      </div>
-    </div>`;
-
-  // Blocks section — leave/mgmt/projects
-  const projOptions=S.projects.map(p=>`<option value="${p.id}">${p.no} — ${p.name}</option>`).join('');
-  const blockRows=blocks.map((b,bi)=>{
-    let leftLabel='', rightControl='', badge='';
-    if(b.type==='leave'){
-      leftLabel=`🏖 Annual Leave block (R${b.row})`;
-      badge='<span style="background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:700;">LEAVE</span>';
-      rightControl=`<span style="font-size:10px;color:var(--tx3);">→ S.leaveHrs (anchor 2026-04-06)</span>`;
-    }else if(b.type==='mgmt'){
-      leftLabel=`📊 Admin / Mgmt block (R${b.row})`;
-      badge='<span style="background:#ede9fe;color:#5b21b6;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:700;">MGMT</span>';
-      rightControl=`<span style="font-size:10px;color:var(--tx3);">→ S.mgmtHrs (anchor 2026-04-06)</span>`;
-    }else{
-      const detected=b.detectedName||b.handoffName;
-      leftLabel=`📋 ${detected} <span style="font-size:9px;color:var(--tx3);">(R${b.row})</span>`;
-      if(b.match){
-        badge=`<span style="background:#d1fae5;color:#065f46;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:700;">MATCHED</span>`;
-        rightControl=`<select onchange="setBIMBlockAction(${bi},this.value)" style="font-size:11px;padding:3px 6px;border:1px solid var(--bdr);border-radius:5px;">
-          <option value="apply" selected>→ ${b.match.no} ${b.match.name}</option>
-          <option value="skip">Skip this block</option>
-          <option value="map">Map to other project…</option>
-        </select>`;
-      }else{
-        badge=`<span style="background:#fee2e2;color:#991b1b;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:700;">UNKNOWN</span>`;
-        rightControl=`<select onchange="setBIMBlockAction(${bi},this.value)" style="font-size:11px;padding:3px 6px;border:1px solid var(--bdr);border-radius:5px;">
-          <option value="skip" selected>Skip this block</option>
-          <option value="map">Map to existing project…</option>
-        </select>`;
-      }
-    }
-    const mapPickerId=`bim-map-picker-${bi}`;
-    return `<tr>
-      <td>${badge}</td>
-      <td>${leftLabel}</td>
-      <td style="text-align:right;font-size:10px;color:var(--tx3);">${Math.round(b.totalHrs)}h</td>
-      <td>${rightControl}<div id="${mapPickerId}" style="display:none;margin-top:5px;">
-        <select onchange="setBIMBlockMap(${bi},this.value)" style="font-size:11px;padding:3px 6px;border:1px solid var(--bdr);border-radius:5px;width:100%;">
-          <option value="">— pick a project —</option>
-          ${projOptions}
-        </select>
-      </div></td>
-    </tr>`;
-  }).join('');
-
-  const blocksSection=`
-    <div style="margin-bottom:8px;">
-      <div style="font-size:12px;font-weight:700;color:#0f766e;margin-bottom:6px;">📦 Hour Blocks detected: ${blocks.length}</div>
-      <div style="max-height:280px;overflow-y:auto;border:1px solid var(--bdr);border-radius:6px;">
-        <table class="tbl" style="font-size:11px;width:100%;">
-          <thead><tr><th>Type</th><th>Source</th><th>Hours</th><th>Destination</th></tr></thead>
-          <tbody>${blockRows}</tbody>
-        </table>
-      </div>
-      <div style="font-size:10px;color:var(--tx3);margin-top:6px;">
-        ℹ️ TBA 1–6 blocks are skipped entirely (per handoff). For unknown projects, defaulting to <strong>Skip</strong> — change the dropdown to map them to an existing project before applying.
-      </div>
-    </div>`;
-
-  const totalProjectHrs=blocks.filter(b=>b.type==='project').reduce((a,b)=>a+b.totalHrs,0);
-  const totalLeaveHrs=blocks.filter(b=>b.type==='leave').reduce((a,b)=>a+b.totalHrs,0);
-  const totalMgmtHrs=blocks.filter(b=>b.type==='mgmt').reduce((a,b)=>a+b.totalHrs,0);
-
-  document.getElementById('bim-import-body').innerHTML=memSection+blocksSection;
-  document.getElementById('bim-import-summary').innerHTML=
-    `<strong>${newMembers.length}</strong> new members · <strong>${Math.round(totalLeaveHrs)}h</strong> leave · <strong>${Math.round(totalMgmtHrs)}h</strong> mgmt · <strong>${Math.round(totalProjectHrs)}h</strong> project`;
-  document.getElementById('bim-import-apply-btn').style.display='inline-flex';
-}
-
-function setBIMBlockAction(bi,value){
-  if(!window.bimImportData)return;
-  const b=window.bimImportData.blocks[bi];
-  if(!b)return;
-  b.action=value;
-  const picker=document.getElementById(`bim-map-picker-${bi}`);
-  if(picker)picker.style.display=value==='map'?'block':'none';
-}
-function setBIMBlockMap(bi,projId){
-  if(!window.bimImportData)return;
-  const b=window.bimImportData.blocks[bi];
-  if(!b)return;
-  b.match=projId?S.projects.find(p=>p.id===projId):null;
-  if(!projId)b.action='skip';
-}
-
-async function applyBIMImport(){
-  if(!window.bimImportData){toast('Nothing to import.');return;}
-  const{members,blocks,headerDates,gwiForDate}=window.bimImportData;
-  const btn=document.getElementById('bim-import-apply-btn');
-  btn.disabled=true;btn.textContent='Applying…';
-  const stats={membersAdded:0,membersSkipped:0,leaveCells:0,mgmtCells:0,projHours:0,blocksSkipped:0,blocksApplied:0,errors:[]};
-  const existingIds=new Set(S.engineers.map(e=>e.id));
-
-  try{
-    // ── 1. Add new BIM members (skip existing for re-import safety) ──
-    const newMemberObjs=[];
-    members.forEach(m=>{
-      if(existingIds.has(m.id)){stats.membersSkipped++;return;}
-      const eng={
-        id:m.id, name:m.name, desig:m.desig, pos:m.desig,
-        disc:m.disc, subDisc:m.subDisc, off:m.off,
-        cap:m.cap||45, rate:m.rate, grade:m.grade||'BIM / Technician',
-        team:'BIM', empno:''
-      };
-      S.engineers.push(eng);
-      newMemberObjs.push(eng);
-      stats.membersAdded++;
-    });
-
-    // Push new members to Supabase
-    for(const eng of newMemberObjs){
-      try{await sbUpsert('engineers',{id:eng.id,data:eng});}catch(e){stats.errors.push('engineer '+eng.name+': '+(e.message||e));}
-    }
-
-    // ── 2. Apply each block ──
-    const touchedProjects=new Set();
-    const touchedLeaveIds=new Set();
-    const touchedMgmtIds=new Set();
-
-    for(const b of blocks){
-      if(b.action==='skip'){stats.blocksSkipped++;continue;}
-
-      if(b.type==='leave'){
-        Object.entries(b.memberHours).forEach(([eid,d])=>{
-          if(!S.leaveHrs[eid])S.leaveHrs[eid]=[];
-          d.weekVals.forEach((v,ci)=>{
-            if(!v)return;
-            const date=headerDates[ci];
-            const gwi=gwiForDate(date);
-            if(gwi<0)return;
-            // Safety: don't overwrite an existing non-zero leave value
-            if(!(S.leaveHrs[eid][gwi]>0)){
-              S.leaveHrs[eid][gwi]=v;
-              stats.leaveCells++;
-              touchedLeaveIds.add(eid);
-            }
-          });
-        });
-        stats.blocksApplied++;
-        continue;
-      }
-
-      if(b.type==='mgmt'){
-        Object.entries(b.memberHours).forEach(([eid,d])=>{
-          if(!S.mgmtHrs[eid])S.mgmtHrs[eid]=[];
-          d.weekVals.forEach((v,ci)=>{
-            if(!v)return;
-            const date=headerDates[ci];
-            const gwi=gwiForDate(date);
-            if(gwi<0)return;
-            if(!(S.mgmtHrs[eid][gwi]>0)){
-              S.mgmtHrs[eid][gwi]=v;
-              stats.mgmtCells++;
-              touchedMgmtIds.add(eid);
-            }
-          });
-        });
-        stats.blocksApplied++;
-        continue;
-      }
-
-      // Project block
-      if(!b.match){stats.blocksSkipped++;continue;}
-      const p=b.match;
-      if(!p.weeklyHrs)p.weeklyHrs={};
-      const projWeeks=stageWeeks(p.start,p.end);
-      // Build gwi → projWeekIdx map. Using gwi (which rounds to nearest Monday-anchored week)
-      // makes the lookup robust to whichever weekday the file's column headers use.
-      const projWkMap={};
-      projWeeks.forEach((d,wi)=>{
-        const gwi=gwiForDate(d);
-        if(gwi>=0)projWkMap[gwi]=wi;
-      });
-
-      Object.entries(b.memberHours).forEach(([eid,d])=>{
-        d.weekVals.forEach((v,ci)=>{
-          if(!v)return;
-          const date=headerDates[ci];
-          if(!date)return;
-          const fileGwi=gwiForDate(date);
-          const wi=projWkMap[fileGwi];
-          if(wi==null)return; // outside this project's date range
-          if(!p.weeklyHrs[eid])p.weeklyHrs[eid]=Array(projWeeks.length).fill(0);
-          // Re-import safety: only fill if currently empty
-          if(!(p.weeklyHrs[eid][wi]>0)){
-            p.weeklyHrs[eid][wi]=v;
-            stats.projHours+=v;
-          }
-        });
-      });
-      touchedProjects.add(p.id);
-      stats.blocksApplied++;
-    }
-
-    // ── 3. Persist touched data ──
-    for(const pid of touchedProjects){
-      const p=S.projects.find(x=>x.id===pid);
-      if(p){try{await sbUpsert('projects',{id:p.id,data:p});}catch(e){stats.errors.push('project '+p.name+': '+(e.message||e));}}
-    }
-    for(const eid of touchedLeaveIds){
-      try{await sbFetch('leave_hrs','POST',{id:eid,data:S.leaveHrs[eid]},'resolution=merge-duplicates,return=representation');}catch(e){stats.errors.push('leave '+eid+': '+(e.message||e));}
-    }
-    for(const eid of touchedMgmtIds){
-      try{await sbFetch('mgmt_hrs','POST',{id:eid,data:S.mgmtHrs[eid]},'resolution=merge-duplicates,return=representation');}catch(e){stats.errors.push('mgmt '+eid+': '+(e.message||e));}
-    }
-
-    saveLocal();
-    updSB();
-    closeBIMImportModal();
-    const errPart=stats.errors.length?` · ${stats.errors.length} sync errors (see console)`:'';
-    toast(`BIM import complete · ${stats.membersAdded} members · ${stats.blocksApplied} blocks · ${Math.round(stats.projHours)}h project${errPart}`);
-    if(stats.errors.length)console.warn('BIM import errors:',stats.errors);
-    // Re-render BIM page if currently visible
-    if(CURRENT_PAGE==='bim')renderBIM('pc-bim');
-  }catch(err){
-    console.error('BIM import apply error:',err);
-    toast('Import failed: '+(err.message||err));
-  }finally{
-    btn.disabled=false;btn.textContent='Apply Import';
-  }
-}
 
 // ═══════════════════════════════════════
 // STEP 6 — BIM SEED DATA (parsed from XLSM files)
