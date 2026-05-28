@@ -1511,7 +1511,8 @@ async function initApp(){
   updSB();DASH_FROM_MI=null;DASH_TO_MI=null;
   // Sync grain toggle visual state from saved GRAIN
   setTimeout(syncGrainButtons,50);
-  nav('mep');
+  const savedPage=sessionStorage.getItem('lastPage');
+  nav(savedPage&&PAGES.includes(savedPage)?savedPage:'mep');
 }
 async function seedData(){
   S.engineers=mkEngineers();S.projects=mkProjects(S.engineers);S.rates=JSON.parse(JSON.stringify(DEF_RATES));
@@ -2303,8 +2304,10 @@ function mkChart(id,type,labels,datasets,opts){
 // ═══════════════════════════════════════
 const PAGES=['mep','dxb','egy','ind','hvac','phe','ele','elv','bim','team','proj','leave','mgmt','holidays','rates'];
 let CURRENT_PAGE='mep';
-function nav(p){
+function nav(p, fromPopstate){
   CURRENT_PAGE=p;
+  sessionStorage.setItem('lastPage',p);
+  if(!fromPopstate) history.pushState({page:p},'','');
   PAGES.forEach(x=>{
     const pg=document.getElementById('pg-'+x);if(pg)pg.style.display=x===p?'':'none';
     const ni=document.getElementById('nav-'+x);if(ni)ni.classList.toggle('on',x===p);
@@ -2353,6 +2356,9 @@ function openMobSB(){document.getElementById('sidebar').classList.add('mob-open'
 function closeMobSB(){document.getElementById('sidebar').classList.remove('mob-open');document.getElementById('sb-overlay').style.display='none';document.getElementById('sb-close-btn').style.display='none';}
 function showMobMenuBtns(){document.querySelectorAll('.mob-menu-btn').forEach(b=>b.style.display=isMobile()?'flex':'none');}
 window.addEventListener('resize',showMobMenuBtns);
+window.addEventListener('popstate',function(e){
+  if(e.state&&e.state.page&&PAGES.includes(e.state.page)) nav(e.state.page,true);
+});
 
 // ═══════════════════════════════════════
 // HEATMAP with project drill-down
@@ -5137,8 +5143,12 @@ function setWeekHrsProj(projId,engId,wkIdx,inputEl){
         });
         dv.scrollTop=scrollY;
         try{
-          const inputs=document.querySelectorAll(`input[oninput*="'${p.id}','${engId}',${wkIdx}"]`);
-          if(inputs[0]){inputs[0].focus();inputs[0].select();}
+          const active=document.activeElement;
+          const alreadyInInput=active&&active.tagName==='INPUT'&&active.type==='number';
+          if(!alreadyInInput){
+            const inputs=document.querySelectorAll(`input[oninput*="'${p.id}','${engId}',${wkIdx}"]`);
+            if(inputs[0]){inputs[0].focus();inputs[0].select();}
+          }
         }catch(e){}
       }
     }
