@@ -493,7 +493,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
     <div class="pin-err" id="pin-err-set" style="margin-top:8px;color:#34c759;"></div>
   </div>
 
-  <div style="position:absolute;bottom:12px;width:100%;text-align:center;font-size:9px;color:#b0b0b5;letter-spacing:.02em;z-index:1;">v7.9.21 · 29 May 2026</div>
+  <div style="position:absolute;bottom:12px;width:100%;text-align:center;font-size:9px;color:#b0b0b5;letter-spacing:.02em;z-index:1;">v7.9.22 · 29 May 2026</div>
 </div>
 
 <div class="sb-overlay" id="sb-overlay" onclick="closeMobSB()"></div>
@@ -550,7 +550,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
   <div class="sbi" id="nav-rates" onclick="requireAdmin()"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Cost Rates 🔒</div>
   <div class="sbi" id="nav-proposals" onclick="requireProposals()" style="display:none;"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Proposals 🔒</div>
   <div class="sb-foot" id="sb-foot">Loading…</div>
-  <div style="padding:4px 14px 10px;font-size:9px;color:#b0b0b5;letter-spacing:.02em;">v7.9.21 · 29 May 2026</div>
+  <div style="padding:4px 14px 10px;font-size:9px;color:#b0b0b5;letter-spacing:.02em;">v7.9.22 · 29 May 2026</div>
 </div>
 
 <div class="main">
@@ -884,6 +884,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
       <div class="ff full"><label>Designation</label><input id="em-desig" placeholder="e.g. Senior Electrical Engineer"></div>
       <div class="ff"><label>Employee No.</label><input id="em-empno" placeholder="e.g. EMEP001"></div>
       <div class="ff"><label>Grade Label</label><input id="em-grade-txt" placeholder="e.g. Grade 4"></div>
+      <div class="ff full"><label>Work Email</label><input type="email" id="em-email" placeholder="e.g. name@meinhardtgroup.com"></div>
       <div class="ff full" style="display:flex;align-items:center;gap:10px;padding:6px 0;">
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;font-size:12px;">
           <input type="checkbox" id="em-is-bim" onchange="onBimToggle()" style="width:15px;height:15px;accent-color:#0d9488;">
@@ -4361,12 +4362,12 @@ function renderJseDemandPanel(projectFilter){
 function populateMepLeadDropdown(selId, currentEmail){
   const sel=document.getElementById(selId);if(!sel)return;
   const MEP_LEAD_GRADES=['Technical Manager','Associate Engineer','Principal Engineer','Lead Engineer'];
-  const leads=S.engineers.filter(e=>MEP_LEAD_GRADES.includes(e.grade)&&!e._isVirtual&&e.empno);
+  const leads=S.engineers.filter(e=>MEP_LEAD_GRADES.includes(e.grade)&&!e._isVirtual);
   leads.sort((a,b)=>a.name.localeCompare(b.name));
   sel.innerHTML=`<option value="">— None —</option>`+leads.map(e=>{
-    // Try to match engineer to a Supabase auth email — use empno as fallback identifier
-    const val=e.email||e.empno||e.id;
-    return`<option value="${val}" ${val===currentEmail?'selected':''}>${e.name} — ${e.grade} [${e.off||'DXB'}]</option>`;
+    const val=e.email||'';
+    const label=e.name+' — '+e.grade+' ['+(e.off||'DXB')+']'+(val?'':' ⚠ no email');
+    return`<option value="${val}" ${val&&val===currentEmail?'selected':''}>${label}</option>`;
   }).join('');
 }
 
@@ -4960,7 +4961,7 @@ function fillGrade(isBIM){
 function openEngModal(){
   eId=null;
   document.getElementById('eng-title').textContent='Add Engineer';
-  ['em-name','em-desig','em-empno','em-grade-txt','em-note'].forEach(id=>document.getElementById(id).value='');
+  ['em-name','em-desig','em-empno','em-grade-txt','em-note','em-email'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('em-disc').value='HVAC';
   document.getElementById('em-off').value='DXB';
   document.getElementById('em-cap').value=45;
@@ -4979,6 +4980,7 @@ function editEng(id){
   document.getElementById('em-empno').value=e.empno||'';
   document.getElementById('em-grade-txt').value=e.gradeLabel||'';
   document.getElementById('em-note').value=e.note||'';
+  document.getElementById('em-email').value=e.email||'';
   document.getElementById('em-cap').value=e.cap||45;
   const isBIM=e.team==='BIM';
   document.getElementById('em-is-bim').checked=isBIM;
@@ -5009,6 +5011,7 @@ async function saveEng(){
     grade:document.getElementById('em-grade').value,
     cap:+document.getElementById('em-cap').value||45,
     note:document.getElementById('em-note').value.trim(),
+    email:document.getElementById('em-email').value.trim().toLowerCase(),
     team:isBIM?'BIM':'MEP'
   };
   if(!isBIM)delete eng.subDisc;
