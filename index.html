@@ -541,7 +541,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
     <div class="pin-err" id="pin-err-set" style="margin-top:8px;color:#34c759;"></div>
   </div>
 
-  <div style="position:absolute;bottom:12px;width:100%;text-align:center;font-size:9px;color:#b0b0b5;letter-spacing:.02em;z-index:1;">v7.9.33 · 29 May 2026</div>
+  <div style="position:absolute;bottom:12px;width:100%;text-align:center;font-size:9px;color:#b0b0b5;letter-spacing:.02em;z-index:1;">v7.9.34 · 29 May 2026</div>
 </div>
 
 <div class="sb-overlay" id="sb-overlay" onclick="closeMobSB()"></div>
@@ -599,7 +599,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
   <div class="sbi" id="nav-pending" onclick="requireAdmin('pending')" style="display:none;"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>User Management 🔒 <span id="pending-badge" style="display:none;background:#ef4444;color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;margin-left:4px;">0</span></div>
   <div class="sbi" id="nav-proposals" onclick="requireProposals()" style="display:none;"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Proposals 🔒</div>
   <div class="sb-foot" id="sb-foot">Loading…</div>
-  <div style="padding:4px 14px 10px;font-size:9px;color:#b0b0b5;letter-spacing:.02em;">v7.9.33 · 29 May 2026</div>
+  <div style="padding:4px 14px 10px;font-size:9px;color:#b0b0b5;letter-spacing:.02em;">v7.9.34 · 29 May 2026</div>
 </div>
 
 <div class="main">
@@ -3679,7 +3679,7 @@ function renderProj(){
     const endStr=p.end||'—';
     return`<div class="proj-row" style="display:grid;grid-template-columns:${COLS};align-items:center;gap:12px;padding:7px 14px;border-bottom:1px solid var(--bdr);font-size:12px;cursor:pointer;transition:background .12s;" onclick="openProjDetail('${p.id}')" onmouseover="this.style.background='#f8fafc';this.querySelector('.row-actions').style.opacity='1'" onmouseout="this.style.background='';this.querySelector('.row-actions').style.opacity='0'">
       <div style="color:var(--tx3);font-size:12px;font-weight:500;">${p.no||'—'}</div>
-      <div style="font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;" title="${p.name}">${statusDot(p)}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name}${p.client?`<span style="font-size:10px;color:var(--tx3);font-weight:400;margin-left:5px;">${p.client}</span>`:''}</span></div>
+      <div style="font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;flex-wrap:wrap;gap:4px;" title="${p.name}">${statusDot(p)}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name}${p.client?`<span style="font-size:10px;color:var(--tx3);font-weight:400;margin-left:5px;">${p.client}</span>`:''}</span>${p.mepLeadEmail?`<span style="font-size:9px;font-weight:600;color:#0369a1;background:#e0f2fe;padding:1px 5px;border-radius:4px;white-space:nowrap;">⚙ ${getMepLeadName(p.mepLeadEmail)}</span>`:''}</div>
       <div style="min-width:0;">${buildStrip(p)}</div>
       <div style="text-align:right;font-weight:600;color:#0369a1;">${totalHrs>0?fN(Math.round(totalHrs)):'—'}</div>
       <div class="row-actions" style="text-align:right;opacity:0;transition:opacity .12s;display:flex;gap:4px;justify-content:flex-end;" onclick="event.stopPropagation()">
@@ -3886,6 +3886,7 @@ function renderProjDetail(p){
             <div style="font-size:17px;font-weight:800;color:#0f172a;line-height:1.2;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(p.name)}</div>
             <div class="proj-detail-meta" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:5px;align-items:center;">
               ${p.client?`<span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:#475569;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:5px;padding:2px 8px;font-weight:600;"><svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="opacity:.6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>${esc(p.client)}</span>`:''}
+              ${p.mepLeadEmail?`<span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:#0369a1;background:#e0f2fe;border:1px solid #bae6fd;border-radius:5px;padding:2px 8px;font-weight:600;">⚙ ${getMepLeadName(p.mepLeadEmail)}</span>`:''}
               ${p.pm?`<span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:#475569;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:5px;padding:2px 8px;font-weight:600;"><svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="opacity:.6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>${esc(p.pm)}</span>`:''}
               ${p.location?`<span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:#475569;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:5px;padding:2px 8px;font-weight:600;"><svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="opacity:.6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>${esc(p.location)}</span>`:''}
               <span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:#475569;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:5px;padding:2px 8px;font-weight:600;"><svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="opacity:.6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>${p.start} → ${p.end}</span>
@@ -4580,6 +4581,13 @@ function populateMepLeadDropdown(selId, currentEmail){
     const label=e.name+' — '+e.grade+' ['+(e.off||'DXB')+']'+(val?'':' ⚠ no email');
     return`<option value="${val}" ${val&&val===currentEmail?'selected':''}>${label}</option>`;
   }).join('');
+}
+
+function getMepLeadName(email){
+  if(!email)return null;
+  const eng=S.engineers.find(e=>e.email&&e.email.toLowerCase()===email.toLowerCase());
+  if(eng){const parts=eng.name.split(' ');return parts[0]+(parts[1]?' '+parts[1]:'');}
+  return email.split('@')[0].replace(/[._]/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
 }
 
 function toggleProgLock(projId){
