@@ -493,7 +493,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
     <div class="pin-err" id="pin-err-set" style="margin-top:8px;color:#34c759;"></div>
   </div>
 
-  <div style="position:absolute;bottom:12px;width:100%;text-align:center;font-size:9px;color:#b0b0b5;letter-spacing:.02em;z-index:1;">v7.9.25 · 29 May 2026</div>
+  <div style="position:absolute;bottom:12px;width:100%;text-align:center;font-size:9px;color:#b0b0b5;letter-spacing:.02em;z-index:1;">v7.9.27 · 29 May 2026</div>
 </div>
 
 <div class="sb-overlay" id="sb-overlay" onclick="closeMobSB()"></div>
@@ -550,7 +550,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
   <div class="sbi" id="nav-rates" onclick="requireAdmin()"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Cost Rates 🔒</div>
   <div class="sbi" id="nav-proposals" onclick="requireProposals()" style="display:none;"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Proposals 🔒</div>
   <div class="sb-foot" id="sb-foot">Loading…</div>
-  <div style="padding:4px 14px 10px;font-size:9px;color:#b0b0b5;letter-spacing:.02em;">v7.9.25 · 29 May 2026</div>
+  <div style="padding:4px 14px 10px;font-size:9px;color:#b0b0b5;letter-spacing:.02em;">v7.9.27 · 29 May 2026</div>
 </div>
 
 <div class="main">
@@ -672,14 +672,15 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
             <button class="sort-btn on asc" data-col="name" onclick="setSort('name')">Name</button>
             <button class="sort-btn" data-col="disc" onclick="setSort('disc')">Discipline</button>
             <button class="sort-btn" data-col="off" onclick="setSort('off')">Office</button>
-            <button class="sort-btn" data-col="grade" onclick="setSort('grade')">Grade</button>
-            <button class="sort-btn" data-col="util" onclick="setSort('util')">Utilisation</button>
+            <button class="sort-btn" data-col="name" onclick="setSort('name')">Name ↑</button>
+            <button class="sort-btn" data-col="disc" onclick="setSort('disc')">Discipline</button>
+            <button class="sort-btn" data-col="off" onclick="setSort('off')">Office</button>
             <button class="sort-btn" data-col="projects" onclick="setSort('projects')">Projects</button>
           </div>
         </div>
       </div>
       <div class="card" style="padding:0;overflow:hidden"><div class="tbl-wrap"><table class="tbl">
-        <thead><tr><th style="width:20px"></th><th>#</th><th>Name</th><th class="col-desig">Designation</th><th>Disc</th><th>Off</th><th class="col-grade">Grade</th><th>Avg Util</th><th>Proj</th><th></th></tr></thead>
+        <thead><tr><th style="width:20px"></th><th>Name</th><th class="col-desig">Designation</th><th>Disc</th><th>Off</th><th>Capacity</th><th></th></tr></thead>
         <tbody id="team-body"></tbody>
       </table></div></div>
     </div>
@@ -883,7 +884,6 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
       <div class="ff full"><label>Full Name *</label><input id="em-name"></div>
       <div class="ff full"><label>Designation</label><input id="em-desig" placeholder="e.g. Senior Electrical Engineer"></div>
       <div class="ff"><label>Employee No.</label><input id="em-empno" placeholder="e.g. EMEP001"></div>
-      <div class="ff"><label>Grade Label</label><input id="em-grade-txt" placeholder="e.g. Grade 4"></div>
       <div class="ff full"><label>Work Email</label><input type="email" id="em-email" placeholder="e.g. name@meinhardtgroup.com"></div>
       <div class="ff full" style="display:flex;align-items:center;gap:10px;padding:6px 0;">
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;font-size:12px;">
@@ -1417,6 +1417,8 @@ async function doLogin(){
 }
 
 async function doLogout(){
+  try{closeMobSB();}catch(e){}
+  setTimeout(async()=>{
   if(!confirm('Sign out?'))return;
   try{
     await fetch(SB_URL+'/auth/v1/logout',{
@@ -1439,6 +1441,7 @@ async function doLogout(){
   document.getElementById('login-btn').disabled=false;
   document.getElementById('login-btn').textContent='Sign In';
   showEmailLogin();
+  },100);
 }
 
 // Inject brand logo into login screen
@@ -3344,15 +3347,12 @@ function renderTeam(){
       </td></tr>`:'';
     return`<tr style="cursor:${hasProjs?'pointer':'default'}${isBIM?';background:#fafffe':''}" onclick="${hasProjs?`toggleEngRow('${e.id}','team-body')`:''}" title="${hasProjs?'Click for project breakdown':''}">
       <td style="text-align:center;font-size:11px;color:${accentColor}" id="eng-chev-team-body-${e.id}">${hasProjs?(isOpen?'▼':'▶'):'—'}</td>
-      <td style="color:var(--tx3)">${e.empno||i+1}</td>
       <td style="font-weight:600;white-space:nowrap">${e.name}${isBIM&&e.off==='IND'?` <span title="India Resource Centre" style="font-size:8px;color:var(--tx3);font-weight:400;">(IND)</span>`:''}</td>
       <td class="col-desig" style="font-size:10px;color:var(--tx2)">${e.desig||'—'}</td>
       <td>${discBadge}</td>
       <td>${isBIM&&e.off==='IND'?'':`<span class="bdg ${e.off==='DXB'?'b-dxb':e.off==='EGY'?'b-egy':'b-gry'}">${e.off}</span>`}</td>
-      <td class="col-grade" style="font-size:10px">${e.gradeLabel||e.grade}</td>
-      <td><div style="display:flex;align-items:center;gap:7px;min-width:100px"><div class="pb" style="flex:1"><div class="pb-f" style="width:${bw}%;background:${bc}"></div></div><span>${avg.toFixed(1)}%</span></div></td>
-      <td>${pc}</td>
-      <td style="white-space:nowrap">
+      <td style="font-size:11px;color:var(--tx2)">${e.cap||45} hrs/wk</td>
+      <td>
         <button class="btn btn-g btn-xs" onclick="event.stopPropagation();editEng('${e.id}')">Edit</button>
         <button class="btn btn-d btn-xs" onclick="event.stopPropagation();delEng('${e.id}')">Del</button>
       </td></tr>${projDetail}`;
@@ -4965,7 +4965,7 @@ function fillGrade(isBIM){
 function openEngModal(){
   eId=null;
   document.getElementById('eng-title').textContent='Add Engineer';
-  ['em-name','em-desig','em-empno','em-grade-txt','em-note','em-email'].forEach(id=>document.getElementById(id).value='');
+  ['em-name','em-desig','em-empno','em-note','em-email'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('em-disc').value='HVAC';
   document.getElementById('em-off').value='DXB';
   document.getElementById('em-cap').value=45;
@@ -4985,7 +4985,6 @@ function editEng(id){
   document.getElementById('em-grade-txt').value=e.gradeLabel||'';
   document.getElementById('em-note').value=e.note||'';
   document.getElementById('em-email').value=e.email||'';
-  document.getElementById('em-cap').value=e.cap||45;
   const isBIM=e.team==='BIM';
   document.getElementById('em-is-bim').checked=isBIM;
   document.getElementById('em-disc-label').textContent=isBIM?'Sub-Discipline *':'Discipline *';
@@ -5006,7 +5005,6 @@ async function saveEng(){
     name,
     desig:document.getElementById('em-desig').value.trim(),
     empno:document.getElementById('em-empno').value.trim(),
-    gradeLabel:document.getElementById('em-grade-txt').value.trim(),
     // FIELD NAMES: always use shorthand 'disc' and 'off' internally.
     // Any code reading engineer objects must use e.disc / e.off (not e.discipline / e.office).
     disc:discVal,   // for BIM, disc = subDisc (what discipline they support)
