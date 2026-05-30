@@ -1768,27 +1768,73 @@ async function renderPendingUsers(){
           <button class="btn btn-p btn-sm" onclick="addRole()" style="white-space:nowrap;">+ Add</button>
         </div>
       </div>`;
-      // Roles table
-      const tableHeader=`<div style="display:grid;grid-template-columns:1fr 100px 60px 60px;gap:6px;padding:8px 12px;background:#f1f5f9;border-radius:8px 8px 0 0;font-size:10px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.04em;border:1px solid var(--bdr);">
-        <div>Engineer</div><div>Role</div><div>Scope</div><div style="text-align:right;">Del</div>
-      </div>`;
-      const rows=allRoles.length?allRoles.map((r,i)=>{
-        const eng=engineers.find(e=>e.email&&e.email.toLowerCase()===r.email.toLowerCase());
-        const name=eng?eng.name.split(' ').slice(0,2).join(' '):r.email;
-        const roleColor=ROLE_COLORS[r.role]||'#f1f5f9;color:#374151';
-        const scopeLabel=r._fromProject?r.scope:(r.role==='mep_lead'?(S.projects.find(p=>p.id===r.scope)||{}).no||r.scope||'—':r.scope||'—');
-        const actionBtn=r._fromProject?`<span style="font-size:9px;color:var(--tx3);">via project</span>`:`<button class="btn btn-d btn-xs" onclick="removeRole('${r.id}')" style="padding:3px 6px;font-size:10px;">✕</button>`;
-        return`<div style="display:grid;grid-template-columns:1fr 100px 60px 60px;gap:6px;padding:10px 12px;border:1px solid var(--bdr);border-top:none;background:#fff;${i===allRoles.length-1?'border-radius:0 0 8px 8px':''}">
-          <div>
-            <div style="font-size:12px;font-weight:600;">${name}</div>
-            <div style="font-size:10px;color:var(--tx3);">${r.email}</div>
+      // --- Group everything by person (one card per engineer) ---
+      const byEmail={};
+      const personFor=(email)=>{
+        const key=(email||'').toLowerCase();
+        if(!byEmail[key]){
+          const eng=engineers.find(e=>e.email&&e.email.toLowerCase()===key);
+          byEmail[key]={email:eng?eng.email:email,name:eng?eng.name:email,desig:eng?eng.desig:'',roles:{}};
+        }
+        return byEmail[key];
+      };
+      // manually-defined roles (removable)
+      S.roles.forEach(r=>{
+        if(!r.email)return;
+        const p=personFor(r.email);
+        (p.roles[r.role]=p.roles[r.role]||[]).push({scope:r.scope,id:r.id,fromProject:false,role:r.role});
+      });
+      // MEP leads derived from project assignments (not removable here)
+      S.projects.forEach(pr=>{
+        if(!pr.mepLeadEmail)return;
+        const p=personFor(pr.mepLeadEmail);
+        (p.roles.mep_lead=p.roles.mep_lead||[]).push({scope:pr.no||pr.name,fromProject:true,projId:pr.id,role:'mep_lead'});
+      });
+
+      const people=Object.values(byEmail).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+      const roleOrder=['admin','mep_lead','disc_lead','bim_lead','viewer'];
+      const NO_SCOPE=new Set(['admin','bim_lead','viewer']);
+      const scopeText=(it)=>{
+        if(it.fromProject)return it.scope||'—';
+        if(it.role==='mep_lead'){const p=S.projects.find(x=>x.id===it.scope);return p?(p.no||p.name):(it.scope||'—');}
+        return it.scope||'—';
+      };
+      const delBtn=(id)=>`<button onclick="removeRole('${id}')" title="Remove" style="border:none;background:none;cursor:pointer;color:#9ca3af;font-size:13px;line-height:1;padding:0 0 0 5px;margin:0;">×</button>`;
+
+      let sawProj=false;
+      const cards=people.length?people.map(person=>{
+        const initial=(person.name||'?').charAt(0).toUpperCase();
+        const blocks=roleOrder.filter(rt=>person.roles[rt]).map(rt=>{
+          const items=person.roles[rt];
+          const color=ROLE_COLORS[rt]||'#f1f5f9;color:#374151';
+          const pill=`<span style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;background:${color};white-space:nowrap;">${ROLE_LABELS[rt]||rt}</span>`;
+          if(NO_SCOPE.has(rt)){
+            const man=items.find(it=>!it.fromProject);
+            return`<div style="display:flex;align-items:center;gap:6px;margin-top:6px;">${pill}${man?delBtn(man.id):''}</div>`;
+          }
+          // dedupe scope chips by label, keep one removable id per label
+          const seen={};
+          items.forEach(it=>{const t=scopeText(it);if(!seen[t]||(!it.fromProject&&seen[t].fromProject))seen[t]=it;});
+          const chips=Object.keys(seen).sort().map(t=>{
+            const it=seen[t];
+            if(it.fromProject){sawProj=true;return`<span style="font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px;background:#f1f5f9;color:#64748b;border:1px dashed #cbd5e1;">${t}</span>`;}
+            return`<span style="display:inline-flex;align-items:center;font-size:11px;font-weight:600;padding:3px 5px 3px 9px;border-radius:6px;background:#eef2ff;color:#3730a3;">${t}${delBtn(it.id)}</span>`;
+          }).join('');
+          return`<div style="display:flex;align-items:flex-start;gap:8px;margin-top:6px;">${pill}<div style="display:flex;flex-wrap:wrap;gap:5px;">${chips}</div></div>`;
+        }).join('');
+        return`<div class="card" style="padding:13px 16px;margin-bottom:8px;display:flex;align-items:flex-start;gap:12px;">
+          <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#007aff,#5856d6);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;font-weight:700;color:#fff;">${initial}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:600;color:var(--tx);" title="${person.name}">${(person.name||'').split(' ').slice(0,2).join(' ')}</div>
+            <div style="font-size:11px;color:var(--tx3);">${person.email}${person.desig?' · '+person.desig:''}</div>
+            ${blocks}
           </div>
-          <div><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:5px;background:${roleColor};">${ROLE_LABELS[r.role]||r.role}</span></div>
-          <div style="font-size:11px;color:var(--tx2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${scopeLabel}</div>
-          <div style="text-align:right;">${actionBtn}</div>
         </div>`;
-      }).join(''):`<div style="padding:24px;text-align:center;color:var(--tx3);font-size:13px;font-style:italic;border:1px solid var(--bdr);border-top:none;border-radius:0 0 8px 8px;background:#fff;">No roles defined yet. Add roles above.</div>`;
-      el.innerHTML=addForm+tableHeader+rows;
+      }).join(''):`<div class="card" style="padding:32px;text-align:center;color:var(--tx3);font-size:13px;font-style:italic;">No roles defined yet. Add a role above.</div>`;
+
+      const legend=sawProj?`<div style="font-size:10px;color:var(--tx3);margin:6px 2px 0;display:flex;align-items:center;gap:6px;"><span style="font-size:11px;padding:2px 7px;border-radius:6px;background:#f1f5f9;color:#64748b;border:1px dashed #cbd5e1;">dashed</span> = MEP Lead pulled from the project assignment (edit it on the project, not here)</div>`:'';
+      const heading=people.length?`<div style="font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px;">${people.length} ${people.length>1?'people':'person'} with roles</div>`:'';
+      el.innerHTML=addForm+heading+cards+legend;
     }
   }catch(e){console.error(e);el.innerHTML='<div style="padding:20px;color:var(--red);">Error loading. Please refresh.</div>';}
 }
